@@ -1,18 +1,45 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+const stockSymbol: string[] = ["SPX", "DJI", "IXIC", "RUT"];
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
-});
+//console.log("Seleccione el simbolo para el cual desea realizar la prueba:");
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test("Scrapper", async ({ page }) => {
+  await page.goto(
+    `https://finance.yahoo.com/quote/%5E${stockSymbol[0]}/history`,
+    { waitUntil: "domcontentloaded" }
+  );
 
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
+  //Validar que hay tabla
+  console.log("Tabla encontrada:", await page.getByRole("table").count());
+  await expect(page.getByRole("table")).toBeVisible();
 
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+  // Validar # de filas y columnas en la tabla
+  const table = page.getByRole("table");
+  const rows = table.locator("tbody tr");
+  const rowCount = await rows.count();
+  console.log("Número de filas en la tabla:", rowCount);
+
+  const columns = table.locator("thead th");
+  const columnCount = await columns.count();
+  console.log("Número de columnas en la tabla:", columnCount);
+
+  // Scroll the footer into view, forcing an "infinite list" to load more content
+  await page
+    .getByText("Copyright © 2025 Yahoo. All rights reserved.")
+    .scrollIntoViewIfNeeded();
+
+  // obtener datos de cada fila
+  for (let i = 0; i < rowCount; i++) {
+    const row = rows.nth(i);
+    const cells = row.locator("td");
+    const cellCount = await cells.count();
+    console.log(`Fila ${i + 1} tiene ${cellCount} celdas`);
+
+    for (let j = 0; j < cellCount; j++) {
+      const cell = cells.nth(j);
+      const cellText = await cell.textContent();
+      console.log(`Celda [${i + 1}, ${j + 1}]: ${cellText}`);
+    }
+  }
 });
