@@ -7,6 +7,9 @@ import path from "path"; // Para manejar rutas de archivos
 //const stockSymbol: string[] = ["SPX", "DJI", "IXIC", "RUT"];
 let selectedSymbol: string = "DJI";
 
+const tableHeaders: string[] = [];
+const tableData: string[][] = [];
+
 test("Scrapper", async ({ page }) => {
   await page.goto(
     `https://finance.yahoo.com/quote/%5E${selectedSymbol}/history`,
@@ -37,14 +40,17 @@ test("Scrapper", async ({ page }) => {
   console.log(
     "Esperando 5 segundos para que la tabla se cargue completamente..."
   );
-  await page.waitForTimeout(5000);
+
+  // Esperar a que la tabla se cargue completamente
+  /////////////////////////////////////////await page.waitForTimeout(10000);
 
   // Validar encabezados (DOHLCAV)
   const headers = table.locator("thead th");
   console.log("Encabezados de la tabla:");
   for (let i = 0; i < (await headers.count()); i++) {
     const headerText = await headers.nth(i).textContent();
-    console.log(`Encabezado ${i + 1}: ${headerText}`);
+    tableHeaders.push(headerText?.trim() || "");
+    //console.log(`Encabezado ${i + 1}: ${headerText}`);
   }
 
   // obtener datos de cada fila
@@ -52,12 +58,31 @@ test("Scrapper", async ({ page }) => {
     const row = rows.nth(i);
     const cells = row.locator("td");
     const cellCount = await cells.count();
-    console.log(`Fila ${i + 1} tiene ${cellCount} celdas`);
+    const rowData: string[] = [];
+    //console.log(`Fila ${i + 1} tiene ${cellCount} celdas`);
 
     for (let j = 0; j < cellCount; j++) {
       const cell = cells.nth(j);
       const cellText = await cell.textContent();
-      console.log(`Celda [${i + 1}, ${j + 1}]: ${cellText}`);
+      rowData.push(cellText?.trim() || "");
+      //console.log(`Celda [${i + 1}, ${j + 1}]: ${cellText}`);
     }
+    tableData.push(rowData);
   }
+
+  //console.log("Encabezados:", tableHeaders);
+  //console.log("Datos de la tabla:", tableData);
+
+  // Guardar datos en un archivo Excel
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.aoa_to_sheet([tableHeaders, ...tableData]);
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Historial de " + selectedSymbol
+  );
+
+  const filePath = path.join(__dirname, `historial_${selectedSymbol}.xlsx`);
+  XLSX.writeFile(workbook, filePath);
+  console.log(`Datos guardados en ${filePath}`);
 });

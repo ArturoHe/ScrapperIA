@@ -21,3 +21,5 @@ Repo Scrapper Financiero
 - v1.0.2 -> Añadida verificación del símbolo al inicio y espera para obtener datos (10s), xlsx añadido a las dependencias
 
 ---
+
+- v2.0.0 -> Añadida la función para exportar a excel los datos
