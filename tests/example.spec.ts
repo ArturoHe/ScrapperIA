@@ -16,6 +16,15 @@ test("Scrapper", async ({ page }) => {
 
   // Validar # de filas y columnas en la tabla
   const table = page.getByRole("table");
+
+  // Validar encabezados (DOHLCAV)
+  const headers = table.locator("thead th");
+  console.log("Encabezados de la tabla:");
+  for (let i = 0; i < (await headers.count()); i++) {
+    const headerText = await headers.nth(i).textContent();
+    console.log(`Encabezado ${i + 1}: ${headerText}`);
+  }
+
   const rows = table.locator("tbody tr");
   const rowCount = await rows.count();
   console.log("Número de filas en la tabla:", rowCount);
